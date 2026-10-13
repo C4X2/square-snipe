@@ -1,0 +1,8 @@
+.square-row {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.square-row div {
+    display: inline-block;
+}

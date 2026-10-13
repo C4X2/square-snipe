@@ -1,0 +1,28 @@
+{
+	"levels": [
+		{
+			"level": 1,
+			"squares": [
+				[ "red", "yellow", "green" ],
+				[ "orange", "purple", "red" ]
+			]
+		},
+		{
+			"level": 2,
+			"squares": [
+				[ "coral", "aquamarine", "green", "black" ],
+				[ "orange", "purple", "aquamarine", "brown" ]
+			],
+			"clockBoost": 5
+		},
+		{
+			"level": 3,
+			"squares": [
+				[ "white", "thistle", "violet", "tomato" ],
+				[ "springgreen", "RebeccaPurple", "NavajoWhite", "brown" ]
+			],
+			"clockBoost": 7
+		}
+	],
+	"maxClock": 1000000000000000000000000000000
+}

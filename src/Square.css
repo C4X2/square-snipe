@@ -1,0 +1,35 @@
+
+
+.square {
+    width: 125px;
+    height: 125px;
+}  
+
+/*
+@media screen(max-width:720px) and screen(max-height:720px) {
+    .square {
+	width: 10px;
+	height: 10px;
+    }
+}
+
+@media screen(width > 720px) {
+.square {
+	width: 200px;
+	height: 200px;
+    }
+}
+
+@media screen(height > 720px) {
+.square {
+	width: 200px;
+	height: 200px;
+    }
+}*/
+
+
+
+
+
+
+
