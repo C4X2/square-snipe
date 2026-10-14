@@ -2,11 +2,11 @@
   "name": "s3-game",
   "private": true,
   "homepage": "https://c4x2.github.io/square-snipe",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "node build/increment_ver.js && tsc && vite build",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",

@@ -8,11 +8,11 @@ import DownloadGame from './DownloadGame'
 import Instructions from './Instructions'
 
 import {
-  createBrowserRouter,
+  createHashRouter,
   RouterProvider
 } from "react-router-dom";
 
-const appRouter = createBrowserRouter([
+const appRouter = createHashRouter([
     {
 	path: "/",
 	element: <App />

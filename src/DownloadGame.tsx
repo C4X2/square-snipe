@@ -16,7 +16,7 @@ export default function DownloadGame() {
                 </p>
 
                 <a
-                    href="/exe/square-snipe.exe"
+                    href={`${import.meta.env.BASE_URL}exe/square-snipe.exe`}
                     download="square-snipe.exe"
                     className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold rounded-xl shadow-lg hover:shadow-emerald-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                 >
