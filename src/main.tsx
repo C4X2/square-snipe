@@ -9,10 +9,8 @@ import Instructions from './Instructions'
 
 import {
   createBrowserRouter,
-  RouterProvider,
-  Route
+  RouterProvider
 } from "react-router-dom";
-import Victory from './Victory.tsx'
 
 const appRouter = createBrowserRouter([
     {

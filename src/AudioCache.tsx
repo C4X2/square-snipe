@@ -4,8 +4,13 @@ import score from "./assets/audio/pickupCoin.wav.mp4";
 import powerUp from "./assets/audio/powerUp.wav.mp4";
 import { Howl } from 'howler';
 
+let cachedInstance: AudioBank | null = null;
+
 export function buildAudioBank(): AudioBank {
-    return new CachedAudioBank();
+    if (!cachedInstance) {
+        cachedInstance = new CachedAudioBank();
+    }
+    return cachedInstance;
 }
 
 function createHowl(str: string): Howl {

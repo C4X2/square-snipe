@@ -1,23 +1,49 @@
-import './Square.css'
-
-const id_prefix = "sq_id_";
-
-export function Square(params: SquareParams) {
-    const id = id_prefix + params.color + "_" + params.rowNum + "_";
-    return (
-        <>
-            <div id={id} className="square" onClick={() => params.sqClick(id)} style={{ backgroundColor: params.color }} data-color={params.color} data-shaking={""}>
-
-            </div>
-        </>
-    );
-
-}
+import './Square.css';
 
 export interface SquareParams {
-    color: string /* The color you want the square to be */,
-    sqClick: (arg0: string) => void /* The function to be called on click*/,
-    rowNum: number /* Which row this is in */
+    color: string;
+    sqClick?: (id: string) => void;
+    rowNum?: number;
+    colNum?: number;
+    isCleared?: boolean;
+    isShaking?: boolean;
+    isTarget?: boolean;
+    className?: string;
 }
 
-export default Square
+export function Square({
+    color,
+    sqClick,
+    rowNum,
+    colNum,
+    isCleared = false,
+    isShaking = false,
+    isTarget = false,
+    className = ""
+}: SquareParams) {
+    const id = rowNum !== undefined && colNum !== undefined
+        ? `sq_${rowNum}_${colNum}`
+        : `sq_${color}_${rowNum ?? 0}_${colNum ?? 0}`;
+
+    const classes = [
+        isTarget ? "square-target" : "square",
+        isCleared ? "square-cleared" : "",
+        isShaking ? "square-shaking" : "",
+        className
+    ].filter(Boolean).join(" ");
+
+    return (
+        <div
+            id={id}
+            className={classes}
+            onClick={() => sqClick?.(id)}
+            style={{ backgroundColor: color }}
+            data-color={color}
+            data-shaking={isShaking ? "true" : "false"}
+            role={isTarget ? "img" : "button"}
+            aria-label={`${color} square`}
+        />
+    );
+}
+
+export default Square;

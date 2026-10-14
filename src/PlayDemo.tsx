@@ -1,3 +1,4 @@
+import { useState, useEffect, useMemo } from 'react';
 import { BackButton } from './BackButton';
 import { CountdownClock } from './CountdownClock';
 import { Continue } from './Continue';
@@ -5,149 +6,166 @@ import { SquareRow } from './SquareRow';
 import { Score } from './Score';
 import { EndGame } from './EndGame';
 import { LevelDisplay } from './LevelDisplay';
-import { useState, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
-import { levels, maxClock } from './assets/db/levels.json';
-import { shuffleColors } from "./Utils.tsx";
-import { defaultShake } from './UIFunctions.tsx'
 import { TargetSquare } from './TargetSquare';
 import { AudioClip, buildAudioBank } from './AudioCache.tsx';
+import { generateLevel, INITIAL_CLOCK_SECONDS, Level } from './LevelGenerator';
+import { shuffleColors } from './Utils.tsx';
 
-//function countSquaresOfType(level: Level): number {
-//    const squares: string[][] = level.squares;
-//    const goalColor: string = level.goalColor;
-//    if (squares === null || squares === undefined || isEmptyString(goalColor)) {
-//        console.error("No squares found.");
-//        return 0;
-//    }
+export const MAX_CAMPAIGN_LEVELS = 10;
 
-//    return countOccurances(squares, goalColor);
-//}
-
-export interface Level {
-    level: number;
-    squares: string[][];
-    clockBoost?: number;
-}
-
-/*
- * Step 1: Get Data from backend (goals and colors)
- *         Dynamically generate the stage data so it changes everytime? Or at ;east rotate the image randomly
- *         Prolly      
- * Step 3: get List of desired colors
- * Step 4: Once there are no more in the list they can continue to the next level
- *         On continue, need to reload page with new level information, so hitting "Play" -> Level 1 information but continue will load level x +1 info
- * Step 5: If the wrong color is clicked then show a shake animation and make them wait
- * Step 6: Improve the countdown clock to be more visually appealing
-
- * Step 9: Display level to the user
- *
- * 
- */
 export function PlayDemo() {
+    const audioManager = useMemo(() => buildAudioBank(), []);
 
-    const [currentLevel, setCurrentLevel] = useState(0);
-    const [level, setLevel] = useState(levels[currentLevel]);
-    const [colors, setColors] = useState(level.squares);
-    const nav = useNavigate();
+    const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
+    const [level, setLevel] = useState<Level>(() => generateLevel(1));
+    const [clearedMap, setClearedMap] = useState<Record<string, boolean>>({});
+    const [shakingMap, setShakingMap] = useState<Record<string, boolean>>({});
+
     const [found, setFound] = useState(0);
     const [score, setScore] = useState(0);
     const [fin, setFin] = useState(false);
     const [endGame, setEndGame] = useState(false);
-    const [colorArr, setColorArr] = useState(shuffleColors(colors.flat(1)));
-    const goals = colorArr.length;
-    const [clock, setClock] = useState(maxClock);
     const [win, setWin] = useState(true);
-    const [idPrefix, setIdPrefix] = useState(window.crypto.randomUUID());
-    const audioManager = buildAudioBank();
+    const [clock, setClock] = useState(INITIAL_CLOCK_SECONDS);
 
+    // Sequence of target colors to snipe in randomized order
+    const [colorSequence, setColorSequence] = useState<string[]>(() =>
+        shuffleColors(level.squares.flat(1))
+    );
+    const totalGoals = colorSequence.length;
+
+    // Advance to next procedural level
     const incrementLevel = (): void => {
-        setCurrentLevel(currentLevel + 1);
+        const nextLevelIndex = currentLevelIndex + 1;
 
-        if (currentLevel + 1 >= levels.length) {
-            // no more levels in the queue end the game
+        if (nextLevelIndex >= MAX_CAMPAIGN_LEVELS) {
+            // Victory after completing campaign
             setEndGame(true);
+            setWin(true);
             return;
         }
 
-        const llv: Level = levels[currentLevel + 1];
-        setLevel(llv);
+        const nextLevel = generateLevel(nextLevelIndex + 1);
+        setCurrentLevelIndex(nextLevelIndex);
+        setLevel(nextLevel);
+        setClearedMap({});
+        setShakingMap({});
         setFound(0);
-        setColors(llv.squares);
         setFin(false);
-        setColorArr(shuffleColors(llv.squares.flat(1)));
-        setIdPrefix(window.crypto.randomUUID());
-        audioManager.playSound(AudioClip.SCOREUP);
+        setColorSequence(shuffleColors(nextLevel.squares.flat(1)));
+        setClock(prev => prev + nextLevel.clockBoost);
 
-        if (llv.clockBoost) {
-            setClock(clock + llv.clockBoost);
+        audioManager.playSound(AudioClip.POWERUP);
+    };
+
+    // Declarative tile click handler
+    const handleTileClick = (row: number, col: number, color: string) => {
+        const tileKey = `${row}_${col}`;
+
+        // Ignore clicks if tile already cleared, shaking, or level finished
+        if (clearedMap[tileKey] || shakingMap[tileKey] || fin || endGame) {
+            return;
         }
-    }
 
-    const targetColor = (color: string): boolean => {
-        if (colorArr[found] === color) {
+        const expectedColor = colorSequence[found];
+
+        if (expectedColor === color) {
+            // MATCH HIT
             audioManager.playSound(AudioClip.HIT);
-        }
-        else {
-            audioManager.playSound(AudioClip.MISS);
-        }
-        return colorArr[found] === color;
-    }
+            setClearedMap(prev => ({ ...prev, [tileKey]: true }));
 
-    const incrementFound = () => {
-        if (found + 1 >= goals) {
-            setFin(true);
-            setScore(score + clock);
-        }
-        setFound(found + 1);
-    }
+            const newFound = found + 1;
+            setFound(newFound);
+            setScore(prev => prev + 10);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const cr = (clock - 1);
-
-            if (cr <= 0 && !fin) {
-                // The clock has timed out, end the game
+            if (newFound >= totalGoals) {
+                // Completed level
                 setFin(true);
-                setEndGame(true);
-                setWin(false);
+                setScore(prev => prev + clock * 5);
+                audioManager.playSound(AudioClip.SCOREUP);
             }
+        } else {
+            // MISS
+            audioManager.playSound(AudioClip.MISS);
+            setShakingMap(prev => ({ ...prev, [tileKey]: true }));
+            setTimeout(() => {
+                setShakingMap(prev => ({ ...prev, [tileKey]: false }));
+            }, 450);
+        }
+    };
 
-            if (!fin) {
-                setClock(cr);
-            }
+    // Smooth countdown timer
+    useEffect(() => {
+        if (fin || endGame) return;
+
+        const timer = setInterval(() => {
+            setClock(prev => {
+                if (prev <= 1) {
+                    setFin(true);
+                    setEndGame(true);
+                    setWin(false);
+                    return 0;
+                }
+                return prev - 1;
+            });
         }, 1000);
-        return () => clearInterval(interval);
-    }, [clock, score, nav, fin]);
 
-    const squareRows =
-        <div>
-            {colors.map(function (obj, i) {
-                return <SquareRow colors={obj} rowNum={i} targetColor={targetColor} incrementScore={incrementFound} key={idPrefix + i} />
-            })}
-        </div>;
+        return () => clearInterval(timer);
+    }, [fin, endGame]);
 
-    if (!endGame) {
-        return (
-            <>
-                <div className="text-stone-50">
-                    <BackButton href="/" />
-                    <LevelDisplay level={currentLevel} />
-                    {squareRows}
-                    <TargetSquare color={colorArr[found]} clickFunction={defaultShake} />
-                    <Score score={score} />
-                    <CountdownClock timeLeft={clock} />
-                    <Continue levelFin={fin} clickFunction={incrementLevel} />
-                </div>
-            </>
-        );
+    if (endGame) {
+        return <EndGame score={score} win={win} />;
     }
 
     return (
-        <>
-            <EndGame score={score} win={win} />
-        </>
-    )
+        <div className="min-h-screen flex flex-col justify-between items-center p-4 md:p-8 text-stone-50 select-none">
+            {/* Top Navigation & Status Bar */}
+            <header className="w-full max-w-2xl flex flex-wrap items-center justify-between gap-4">
+                <BackButton href="/" />
+                <div className="flex items-center gap-3">
+                    <LevelDisplay level={currentLevelIndex} />
+                    <Score score={score} />
+                    <CountdownClock timeLeft={clock} />
+                </div>
+            </header>
+
+            {/* Target Display and Game Board */}
+            <main className="flex flex-col items-center justify-center my-auto w-full max-w-xl">
+                <TargetSquare
+                    color={colorSequence[found] || ""}
+                />
+
+                <div className="bg-slate-900/60 p-4 md:p-6 rounded-2xl border border-slate-700/60 shadow-2xl backdrop-blur-sm mt-2">
+                    {level.squares.map((rowColors, rIndex) => (
+                        <SquareRow
+                            key={`row_${rIndex}_${level.level}`}
+                            colors={rowColors}
+                            rowNum={rIndex}
+                            onTileClick={handleTileClick}
+                            clearedMap={clearedMap}
+                            shakingMap={shakingMap}
+                        />
+                    ))}
+                </div>
+
+                <div className="text-xs text-slate-400 mt-3 font-medium">
+                    Squares remaining: {Math.max(0, totalGoals - found)} / {totalGoals}
+                </div>
+            </main>
+
+            {/* Level Complete Modal */}
+            <Continue
+                levelFin={fin}
+                clickFunction={incrementLevel}
+                clockBoost={level.clockBoost}
+            />
+
+            {/* Bottom Spacing */}
+            <footer className="text-xs text-slate-500 py-2">
+                Match the target color by clicking its square in the grid
+            </footer>
+        </div>
+    );
 }
 
 export default PlayDemo;

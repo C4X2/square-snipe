@@ -11,14 +11,15 @@ export function isEmptyString(str: string | undefined | null): boolean {
 }
 
 export function shuffleColors(clrs: string[]): string[] {
-    if (clrs === null || clrs === undefined || clrs.length < 1) { return [] }
+    if (!clrs || clrs.length < 1) { return []; }
 
-    for (let i = clrs.length - 1; i > 0; i--) {
-        const rndmIndex = Math.floor(Math.random() * i + 1);
-        [clrs[i], clrs[rndmIndex]] = [clrs[rndmIndex], clrs[i]]
+    const copy = [...clrs];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const rndmIndex = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[rndmIndex]] = [copy[rndmIndex], copy[i]];
     }
 
-    return clrs;
+    return copy;
 }
 
 export function countOccurances(searchString: string[][] | undefined, stringToFind: string | undefined): number {

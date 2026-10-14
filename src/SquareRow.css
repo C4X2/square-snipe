@@ -1,8 +1,7 @@
 .square-row {
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-.square-row div {
-    display: inline-block;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
 }

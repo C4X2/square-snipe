@@ -1,47 +1,30 @@
 export function applyShakeAnimation(id: string): void {
     const elem = document.getElementById(id);
-    if (elem === null || elem === undefined) { return }
-    console.log(elem)
+    if (!elem) { return; }
 
     let counter = 1;
-
-    //The total number of shakes (there will be 1 shake per frame)
     const numberOfShakes = 15;
     let magnitude = 16;
-
     const startX = 0;
     const startY = 0;
-
     const magnitudeUnit = magnitude / numberOfShakes;
+
     function innerShake() {
-
+        if (!elem) return;
         if (counter < numberOfShakes) {
-
-            //Reset the element's position at the start of each shake
-            elem.style.transform = 'translate(' + startX + 'px, ' + startY + 'px)';
-
-            //Reduce the magnitude
+            elem.style.transform = `translate(${startX}px, ${startY}px)`;
             magnitude -= magnitudeUnit;
-
-            //Randomly change the element's position
             const randomX = randomInt(-magnitude, magnitude);
             const randomY = randomInt(-magnitude, magnitude);
-
-            elem.style.transform = 'translate(' + randomX + 'px, ' + randomY + 'px)';
-
-            //Add 1 to the counter
+            elem.style.transform = `translate(${randomX}px, ${randomY}px)`;
             counter += 1;
-
             requestAnimationFrame(innerShake);
+        } else {
+            elem.style.transform = `translate(${startX}px, ${startY}px)`;
         }
-
-        //When the shaking is finished, restore the element to its original 
-        //position and remove it from the `shakingElements` array
-        if (counter >= numberOfShakes) {
-            elem.style.transform = 'translate(' + startX + ', ' + startY + ')';
-        }
-
     }
+
+    requestAnimationFrame(innerShake);
 }
 
 export function defaultShake(id: string) {
