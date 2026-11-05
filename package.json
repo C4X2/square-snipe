@@ -2,7 +2,7 @@
   "name": "s3-game",
   "private": true,
   "homepage": "https://c4x2.github.io/square-snipe",
-  "version": "0.2.0",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
